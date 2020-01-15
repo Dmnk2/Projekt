@@ -1,6 +1,6 @@
-#!/home/student/Plocha/smayat/venv/bin/python3
+#!/home/pi/Desktop/projekt/venv/bin/python
 
-# Author:
+# Author: 
 # Contact: grubert@users.sf.net
 # Copyright: This module has been placed in the public domain.
 

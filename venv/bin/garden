@@ -1,4 +1,4 @@
-#!/home/student/Plocha/smayat/venv/bin/python3
+#!/home/pi/Desktop/projekt/venv/bin/python
 
 import sys
 import argparse

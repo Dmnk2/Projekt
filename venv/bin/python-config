@@ -1,4 +1,4 @@
-#!/home/student/Plocha/smayat/venv/bin/python
+#!/home/pi/Desktop/projekt/venv/bin/python
 
 import sys
 import getopt
