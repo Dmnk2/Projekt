@@ -8,6 +8,7 @@ import adafruit_htu21d
 from adafruit_htu21d import HTU21D
 """
 import sqlite3
+from datetime import datetime
 
 import kivy
 from kivy.app import App
@@ -29,19 +30,20 @@ sm.add_widget(graphScreen)
 
 sm.current = 'main'
 graph_data = '0'
+Cas_zapisu = 0
 
 class MyGrid(GridLayout):
     def __init__(self, **kwargs):
         super(MyGrid, self).__init__(**kwargs)
         self.cols = 1
 
-        self.temButton = Button(text="0 C")
+        self.temButton = Button(text="25 °C")
         self.temButton.bind(on_press=self.temButtonPressed)
 
-        self.humButton = Button(text="0 %")
+        self.humButton = Button(text="22 %")
         self.humButton.bind(on_press=self.humButtonPressed)
 
-        self.preButton = Button(text="0 hPa")
+        self.preButton = Button(text="995 hPa")
         self.preButton.bind(on_press=self.preButtonPressed)
 
         self.mainLayout = GridLayout(cols=2)
@@ -74,13 +76,20 @@ class MyGrid(GridLayout):
         
 
     def update(self, dt):
+        data = dataSQL()
+        now = datetime.now()
+        cas = now.strftime("%H:%M")
+        global Cas_zapisu
         """
         self.temButton.text = str(round(MyApp.bme280.temperature,1))+"C"
         self.humButton.text = str(round(MyApp.htu21d.relative_humidity,1))+"%"
         self.preButton.text = str(round(MyApp.bme280.pressure,1))+"hPa"
         """
-
-        pass
+        if Cas_zapisu == 360:
+            data.zapis(cas, round(MyApp.bme280.temperature,1), round(MyApp.htu21d.relative_humidity,1), round(MyApp.bme280.pressure,1))
+            Cas_zapisu = 0
+        else:
+            Cas_zapisu += 1 
 
 class MyGraphs(GridLayout):
     def __init__(self, **kwargs):
@@ -126,20 +135,6 @@ class MyGraphs(GridLayout):
         sm.current = "main"
 
 class dataSQL():
-    def nastaveni(self):
-        conn = sqlite3.connect('my.db')
-        c = conn.cursor()
-        #c.execute("""CREATE TABLE data(
-        #       id integer not null primary key autoincrement,
-        #       cas text not null,
-        #       teplota real not null,
-        #       vlhkost real not null,
-        #       tlak real not null
-        #       )""")
-        conn.commit()
-        conn.close()
-
-
     def zapis(self, cas, teplota, vlhkost, tlak):
         conn = sqlite3.connect('my.db')
         c = conn.cursor()
@@ -153,7 +148,7 @@ class dataSQL():
     def cteni(self):
         conn = sqlite3.connect('my.db')
         c = conn.cursor()
-        c.execute("SELECT * FROM data ORDER BY id DESC LIMIT 5")
+        c.execute("SELECT * FROM data ORDER BY id DESC LIMIT 10")
         kam = c.fetchall()
         conn.commit()
         conn.close()
@@ -173,11 +168,6 @@ class MyApp(App):
     tlak = bme280.pressure
     """
     def build(self):
-        data = dataSQL()
-        data.nastaveni()
-        #data.zapis("12:30",25,24,995)
-        pole = data.cteni()
-        #print(pole)
 
         # Graphs screen
         self.graphs = MyGraphs()
@@ -228,7 +218,7 @@ class MyApp(App):
         
         print(data)
         print(hodnoty)
-        self.graphs.setPoints(hodnoty, 50, "C")
+        #self.graphs.setPoints(hodnoty, 50, "C")
 
 
 
