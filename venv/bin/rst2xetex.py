@@ -1,4 +1,4 @@
-#!/home/pi/Desktop/projekt/venv/bin/python
+#!/home/pi/Desktop/Projekt/venv/bin/python3
 
 # $Id: rst2xetex.py 7847 2015-03-17 17:30:47Z milde $
 # Author: Guenter Milde

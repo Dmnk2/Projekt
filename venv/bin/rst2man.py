@@ -1,6 +1,6 @@
-#!/home/pi/Desktop/projekt/venv/bin/python
+#!/home/pi/Desktop/Projekt/venv/bin/python3
 
-# Author: 
+# Author:
 # Contact: grubert@users.sf.net
 # Copyright: This module has been placed in the public domain.
 
