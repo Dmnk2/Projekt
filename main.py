@@ -89,11 +89,12 @@ class MyGrid(GridLayout):
         self.humButton.text = str(round(MyApp.htu21d.relative_humidity,1))+"%"
         self.preButton.text = str(round(MyApp.bme280.pressure,1))+"hPa"
         """
-        if self.casZapisu == 360:
-            data.zapis(cas, round(MyApp.bme280.temperature,1), round(MyApp.htu21d.relative_humidity,1), round(MyApp.bme280.pressure,1))
-            self.casZapisu = 0
-        else:
-            self.casZapisu += 1 
+        if MyApp.bme280 is not None and MyApp.htu21d is not None:
+            if self.casZapisu == 360:
+                data.zapis(cas, round(MyApp.bme280.temperature,1), round(MyApp.htu21d.relative_humidity,1), round(MyApp.bme280.pressure,1))
+                self.casZapisu = 0
+            else:
+                self.casZapisu += 1 
 
 
 
@@ -171,6 +172,9 @@ class dataSQL():
 
 
 class MyApp(App):
+    bme280 = None
+    htu21d = None
+    #zakopmentováno pro použití bez senzorů
     """
     bme28_i2c = busio.I2C(3,2)
     bme280 = adafruit_bmp280.Adafruit_BMP280_I2C(bme28_i2c,0x76)
