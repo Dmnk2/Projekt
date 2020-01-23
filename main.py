@@ -21,7 +21,7 @@ from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy_garden.graph import Graph, MeshLinePlot
 
 sm = ScreenManager()
-kivy.require('1.0.7')
+kivy.require('1.11.1')
 
 mainScreen = Screen(name='main')
 graphScreen = Screen(name='graphs')
@@ -30,12 +30,12 @@ sm.add_widget(graphScreen)
 
 sm.current = 'main'
 graph_data = '0'
-Cas_zapisu = 0
 
 class MyGrid(GridLayout):
     def __init__(self, **kwargs):
         super(MyGrid, self).__init__(**kwargs)
         self.cols = 1
+        self.casZapisu = 0
 
         self.temButton = Button(text="25 °C")
         self.temButton.bind(on_press=self.temButtonPressed)
@@ -79,17 +79,18 @@ class MyGrid(GridLayout):
         data = dataSQL()
         now = datetime.now()
         cas = now.strftime("%H:%M")
-        global Cas_zapisu
         """
         self.temButton.text = str(round(MyApp.bme280.temperature,1))+"C"
         self.humButton.text = str(round(MyApp.htu21d.relative_humidity,1))+"%"
         self.preButton.text = str(round(MyApp.bme280.pressure,1))+"hPa"
         """
-        if Cas_zapisu == 360:
+        if self.casZapisu == 360:
             data.zapis(cas, round(MyApp.bme280.temperature,1), round(MyApp.htu21d.relative_humidity,1), round(MyApp.bme280.pressure,1))
-            Cas_zapisu = 0
+            self.casZapisu = 0
         else:
-            Cas_zapisu += 1 
+            self.casZapisu += 1 
+
+
 
 class MyGraphs(GridLayout):
     def __init__(self, **kwargs):
@@ -97,7 +98,7 @@ class MyGraphs(GridLayout):
         self.cols = 1
 
         # Graphs init
-        self.graph = graph = Graph(xlabel='t', ylabel='C', x_ticks_minor=1,
+        self.graph = graph = Graph(xlabel='čas', ylabel='C', x_ticks_minor=1,
         x_ticks_major=5, y_ticks_major=10,
         y_grid_label=True, x_grid_label=True, padding=5,
         x_grid=True, y_grid=True, xmin=-0, xmax=10, ymin=-1, ymax=1)
@@ -111,11 +112,13 @@ class MyGraphs(GridLayout):
         self.mainLayout.add_widget(self.backButton)
         self.add_widget(self.mainLayout)
 
-    def setPoints(self, points, maxY, label):
+    def setPoints(self, points, maxY, label, minY):
         self.graph.ylabel = label
         self.graph.ymax = maxY
-        self.graph.xmax = points[len(points)-1][0]
-        self.graph.xmin = points[0][0]
+        self.graph.xmax = points[len(points)-1][1]+1
+        self.graph.xmin = points[1][1]
+        self.graph.ymin = minY
+        self.graph.ymax = maxY
 
         # Nastaveni skaly osy X
         self.graph.x_ticks_major = round((self.graph.xmax-self.graph.xmin)/10)
@@ -126,10 +129,11 @@ class MyGraphs(GridLayout):
         self.graph.add_plot(plot)
 
         # Nula
-        plot = MeshLinePlot(color=[1, 0, 0, 1])
+        if label == "Teplota":
+            plot = MeshLinePlot(color=[1, 0, 0, 1])
 
-        plot.points = [(points[0][0], 0),(points[len(points)-1][0], 0)]
-        self.graph.add_plot(plot)
+            plot.points = [(0, points[x][1]) for x in range(0,self.graph.xmax)]
+            self.graph.add_plot(plot)
 
     def backButtonPressed(self, *args):
         sm.current = "main"
@@ -196,29 +200,38 @@ class MyApp(App):
             h_tem.append(object[2])
             h_hum.append(object[3])
             h_pre.append(object[4])
-        # Posleni do graphs set Values
+        # Poslani do graphs set Values
         if graph_data == "tem":
             for i, object in enumerate(h_tem):
                 temp.append(object)
                 temp.append(i)
                 hodnoty.append(temp)
                 temp = []
+            YLabel = "Teplota"
+            ymin = -10
+            ymax = 40
         elif graph_data == "hum":
             for i, object in enumerate(h_hum):
                 temp.append(object)
                 temp.append(i)
                 hodnoty.append(temp)
                 temp = []
+            YLabel = "Vlhkost"
+            ymin = 0
+            ymax = 100
         elif graph_data == "pre":
             for i, object in enumerate(h_pre):
                 temp.append(object)
                 temp.append(i)
                 hodnoty.append(temp)
                 temp = []
+            YLabel = "Tlak"
+            ymin = 950
+            ymax = 1020
         
-        print(data)
+        #print(data)
         print(hodnoty)
-        #self.graphs.setPoints(hodnoty, 50, "C")
+        self.graphs.setPoints(hodnoty, ymax, YLabel,ymin)
 
 
 
