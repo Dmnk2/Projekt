@@ -138,7 +138,7 @@ class MyGraphs(GridLayout):
         if label == "Teplota":
             self.plot_zero = MeshLinePlot(color=[1, 0, 0, 1])
 
-            self.plot_zero.points = [(points[x][0], 0) for x in range(0,self.graph.xmax-1)]
+            self.plot_zero.points = [(points[x][0], 0) for x in range(0,self.graph.xmax)]
             self.graph.add_plot(self.plot_zero)
 
     def backButtonPressed(self, *args):
@@ -163,10 +163,13 @@ class dataSQL():
         conn = sqlite3.connect('my.db')
         c = conn.cursor()
         c.execute("SELECT * FROM data ORDER BY id DESC LIMIT 10")
-        kam = c.fetchall()
+        data = c.fetchall()
         conn.commit()
         conn.close()
-        return kam
+        otoceni = []
+        for object in data:
+            otoceni.insert(0,object) 
+        return otoceni
 
 
 
@@ -174,7 +177,7 @@ class dataSQL():
 class MyApp(App):
     bme280 = None
     htu21d = None
-    #zakopmentováno pro použití bez senzorů
+    #zakomentováno pro použití bez senzorů
     """
     bme28_i2c = busio.I2C(3,2)
     bme280 = adafruit_bmp280.Adafruit_BMP280_I2C(bme28_i2c,0x76)
@@ -199,6 +202,8 @@ class MyApp(App):
         return sm
 
     def on_graph_enter(self, *args):
+        o_min = 2000
+        o_max = 0
         h_tem = []
         h_hum = []
         h_pre = []
@@ -220,9 +225,12 @@ class MyApp(App):
                 temp.append(round(object))
                 hodnoty.append(temp)
                 temp = []
+                if o_min > object:
+                    o_min = object
+                if o_max < object:
+                    o_max = object
             YLabel = "Teplota"
-            ymin = -10
-            ymax = 40
+
         elif graph_data == "hum":
             for i, object in enumerate(h_hum):
                 temp.append(i+1)
@@ -232,15 +240,22 @@ class MyApp(App):
             YLabel = "Vlhkost"
             ymin = 0
             ymax = 100
+
         elif graph_data == "pre":
             for i, object in enumerate(h_pre):
                 temp.append(i+1)
                 temp.append(round(object))
                 hodnoty.append(temp)
                 temp = []
+                if o_min > object:
+                    o_min = object
+                if o_max < object:
+                    o_max = object
             YLabel = "Tlak"
-            ymin = 950
-            ymax = 1020
+
+        if graph_data is not "hum":
+            ymin = round(o_min-10, -1)
+            ymax = round(o_max+ 10, -1) 
         
         #print(data)
         print(hodnoty)
