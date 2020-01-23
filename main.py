@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 import RPi.GPIO as GPIO
 import board
@@ -19,10 +21,13 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy_garden.graph import Graph, MeshLinePlot
+from kivy.config import Config
 
 sm = ScreenManager()
 kivy.require('1.11.1')
 
+Config.set('graphics', 'width', '700')
+Config.set('graphics', 'height', '350')
 mainScreen = Screen(name='main')
 graphScreen = Screen(name='graphs')
 sm.add_widget(mainScreen)
@@ -98,14 +103,14 @@ class MyGraphs(GridLayout):
         self.cols = 1
 
         # Graphs init
-        self.graph = graph = Graph(xlabel='čas', ylabel='C', x_ticks_minor=1,
+        self.graph = graph = Graph(xlabel='čas', ylabel='C', x_ticks_minor=1, 
         x_ticks_major=5, y_ticks_major=10,
         y_grid_label=True, x_grid_label=True, padding=5,
         x_grid=True, y_grid=True, xmin=-0, xmax=10, ymin=-1, ymax=1)
 
 
         self.backButton = Button(text="Back", size_hint=(1,.1))
-        self.backButton.bind(on_press=self.backButtonPressed)
+        self.backButton.bind(on_touch_down=self.backButtonPressed)
 
         self.mainLayout = GridLayout(rows=2)
         self.mainLayout.add_widget(graph)
@@ -115,27 +120,31 @@ class MyGraphs(GridLayout):
     def setPoints(self, points, maxY, label, minY):
         self.graph.ylabel = label
         self.graph.ymax = maxY
-        self.graph.xmax = points[len(points)-1][1]+1
-        self.graph.xmin = points[1][1]
+        self.graph.xmax = points[len(points)-1][0]
+        self.graph.xmin = points[0][0]
         self.graph.ymin = minY
         self.graph.ymax = maxY
 
         # Nastaveni skaly osy X
         self.graph.x_ticks_major = round((self.graph.xmax-self.graph.xmin)/10)
 
-        plot = MeshLinePlot(color=[0, 1, 0, 1])
+        self.plot = MeshLinePlot(color=[0, 1, 0, 1])
 
-        plot.points = points
-        self.graph.add_plot(plot)
+        self.plot.points = points
+        self.graph.add_plot(self.plot)
 
         # Nula
         if label == "Teplota":
-            plot = MeshLinePlot(color=[1, 0, 0, 1])
+            self.plot_zero = MeshLinePlot(color=[1, 0, 0, 1])
 
-            plot.points = [(0, points[x][1]) for x in range(0,self.graph.xmax)]
-            self.graph.add_plot(plot)
+            self.plot_zero.points = [(points[x][0], 0) for x in range(0,self.graph.xmax-1)]
+            self.graph.add_plot(self.plot_zero)
 
     def backButtonPressed(self, *args):
+        global graph_data
+        self.graph.remove_plot(self.plot)
+        if graph_data == "tem":
+            self.graph.remove_plot(self.plot_zero)
         sm.current = "main"
 
 class dataSQL():
@@ -203,8 +212,8 @@ class MyApp(App):
         # Poslani do graphs set Values
         if graph_data == "tem":
             for i, object in enumerate(h_tem):
-                temp.append(object)
-                temp.append(i)
+                temp.append(i+1)
+                temp.append(round(object))
                 hodnoty.append(temp)
                 temp = []
             YLabel = "Teplota"
@@ -212,8 +221,8 @@ class MyApp(App):
             ymax = 40
         elif graph_data == "hum":
             for i, object in enumerate(h_hum):
-                temp.append(object)
-                temp.append(i)
+                temp.append(i+1)
+                temp.append(round(object))
                 hodnoty.append(temp)
                 temp = []
             YLabel = "Vlhkost"
@@ -221,8 +230,8 @@ class MyApp(App):
             ymax = 100
         elif graph_data == "pre":
             for i, object in enumerate(h_pre):
-                temp.append(object)
-                temp.append(i)
+                temp.append(i+1)
+                temp.append(round(object))
                 hodnoty.append(temp)
                 temp = []
             YLabel = "Tlak"
